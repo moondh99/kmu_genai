@@ -16,6 +16,7 @@ from agent.answer_builder import build_final_answer
 from agent.classifier import classify_issue
 from agent.guard import inspect_privacy, require_sources
 from agent.planner import suggest_actions
+from ingestion.pipeline import load_state, run_ingestion
 from retriever.hybrid_retriever import HybridRetriever
 
 
@@ -61,24 +62,35 @@ retriever = HybridRetriever()
 frontend_path = Path("frontend")
 if frontend_path.exists():
     app.mount("/frontend", StaticFiles(directory=str(frontend_path)), name="frontend")
+dist_assets = Path("frontend/dist/assets")
+if dist_assets.exists():
+    app.mount("/assets", StaticFiles(directory=str(dist_assets)), name="frontend_assets")
 
 
 @app.get("/", response_model=None)
 def index():
     """Serve the local demo UI when available."""
-    html = Path("frontend/index.html")
+    html = Path("frontend/dist/index.html")
     if html.exists():
         return FileResponse(html)
-    return {"message": "KMU Campus Life Action Agent API"}
+    return {
+        "message": "KMU Campus Life Action Agent API",
+        "frontend": "Run `cd frontend && npm install && npm run dev`, then open http://127.0.0.1:5173",
+    }
 
 
 @app.get("/health")
 def health() -> dict:
     """Return service health and optional vector-store availability."""
+    status = retriever.status()
+    state = load_state()
     return {
         "status": "ok",
-        "keyword_chunks": len(retriever.all_sources()),
-        "vector_retriever_available": retriever.vector.available,
+        "keyword_chunks": status["keyword_chunks"],
+        "vector_retriever_available": status["vector_available"],
+        "vector_indexed_count": status["vector_indexed_count"],
+        "vector_error": status["vector_error"],
+        "last_ingest": state.get("last_ingest"),
     }
 
 
@@ -156,19 +168,24 @@ def action_continue(request: ActionContinueRequest) -> dict:
             "message": privacy.message,
             "safety_flags": privacy.flags,
         }
-    chunks = retriever.search("출석인정 예비군", issue_type="attendance", limit=4)
+    from tools.document_drafter import action_issue_type
+
+    issue_type = action_issue_type(request.action_id)
+    chunks = retriever.search(request.action_id, issue_type=issue_type, limit=4)
     return continue_action(request.action_id, request.slots, chunks)
 
 
 @app.post("/ingest/run")
 def ingest_run(request: IngestRequest) -> dict:
-    """Run a placeholder ingestion job for demo/admin visibility."""
-    _ = request
-    return {
-        "status": "completed",
-        "message": "MVP는 seed JSONL 데이터와 crawler adapter 구조를 사용합니다. 실제 주기 크롤링은 crawler 모듈을 확장해 연결하세요.",
-        "indexed_chunks": len(retriever.all_sources()),
-    }
+    """Run official-source ingestion and vector indexing."""
+    result = run_ingestion(
+        source=request.source,
+        limit=request.limit,
+        force_rebuild=request.force_rebuild,
+        vector_retriever=retriever.vector,
+    )
+    retriever.reload()
+    return result
 
 
 @app.get("/sources")

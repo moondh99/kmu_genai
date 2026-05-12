@@ -29,6 +29,10 @@ def generate_checklist(issue_type: str, policy_chunks: list[dict]) -> dict:
         tasks.extend(["수강신청시스템 나의 시간표 또는 ON국민 개인수업시간표를 확인합니다.", "폐강 공지가 있는 경우 본인 수강신청 내역을 다시 확인합니다."])
     elif issue_type == "certificate":
         tasks.extend(["필요한 증명서 종류를 고릅니다.", "인터넷 증명 발급신청 페이지에서 발급 가능 여부를 확인합니다.", "수수료 및 원본확인 방법을 확인합니다."])
+    elif issue_type == "graduation":
+        tasks.extend(["요람/규정집에서 소속 학과 졸업요건을 확인합니다.", "총 이수학점, 전공 이수학점, 필수과목, 교양영역을 나누어 점검합니다.", "최종 졸업 판정은 소속 학과사무실 또는 교무팀에 확인합니다."])
+    elif issue_type == "contact":
+        tasks.extend(["문의 주제에 맞는 담당 부서를 고릅니다.", "개인정보를 제외한 질문 요약을 준비합니다.", "공식 포털 또는 담당 부서 안내에 따라 후속 확인을 진행합니다."])
     else:
         tasks.append("공식 근거와 담당 부서를 확인합니다.")
 
@@ -38,4 +42,3 @@ def generate_checklist(issue_type: str, policy_chunks: list[dict]) -> dict:
         "application_paths": paths,
         "submit_to": submit_to,
     }
-

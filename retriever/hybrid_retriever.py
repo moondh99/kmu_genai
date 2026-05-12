@@ -10,6 +10,7 @@ class HybridRetriever:
     """Search official sources with vector search when available and keyword fallback always."""
 
     def __init__(self, chunks_path: str = "data/processed/chunks.jsonl"):
+        self.chunks_path = chunks_path
         self.keyword = KeywordRetriever(chunks_path)
         self.vector = VectorRetriever()
 
@@ -28,3 +29,15 @@ class HybridRetriever:
         """Return all indexed official chunks."""
         return self.keyword.all_sources()
 
+    def reload(self) -> None:
+        """Reload JSONL chunks after ingestion."""
+        self.keyword = KeywordRetriever(self.chunks_path)
+
+    def status(self) -> dict:
+        """Return retriever health details for admin surfaces."""
+        return {
+            "keyword_chunks": len(self.all_sources()),
+            "vector_available": self.vector.available,
+            "vector_indexed_count": self.vector.count(),
+            "vector_error": self.vector.error,
+        }

@@ -1,0 +1,8 @@
+.conda-env/
+.conda-pkgs/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+data/vector/
+frontend/dist/
+frontend/node_modules/

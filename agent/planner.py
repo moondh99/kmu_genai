@@ -37,6 +37,18 @@ NEXT_ACTIONS = {
             "action_id": "graduation_audit",
             "label": "졸업요건 간이 진단",
             "description": "비식별 이수학점 요약을 바탕으로 부족 학점을 계산합니다.",
+        },
+        {
+            "action_id": "recommend_course_plan",
+            "label": "수강계획 방향 추천",
+            "description": "부족 학점과 관심 분야를 바탕으로 다음 학기 수강계획 방향을 정리합니다.",
+        }
+    ],
+    "contact": [
+        {
+            "action_id": "draft_contact_message",
+            "label": "문의문 초안 작성",
+            "description": "담당 부서나 교강사에게 보낼 개인정보 없는 문의문 초안을 작성합니다.",
         }
     ],
 }
@@ -51,5 +63,8 @@ def suggest_actions(issue_type: str, chunks: list[dict]) -> list[dict]:
             chunk_actions.append(action_id)
     if "draft_attendance_recognition_form" in chunk_actions and issue_type != "attendance":
         actions.insert(0, NEXT_ACTIONS["attendance"][0])
+    if "draft_contact_message" in chunk_actions:
+        contact_action = NEXT_ACTIONS["contact"][0]
+        if contact_action not in actions:
+            actions.append(contact_action)
     return actions
-

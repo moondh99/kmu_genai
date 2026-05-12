@@ -2,15 +2,10 @@
 
 from __future__ import annotations
 
-from tools.document_drafter import draft_action_document, missing_slots, slot_questions
+from tools.document_drafter import draft_action_document, missing_slots, slot_questions, supported_actions
 
 
-SUPPORTED_ACTIONS = {
-    "draft_attendance_recognition_form": {
-        "label": "출석인정신청서 초안 작성",
-        "issue_type": "attendance",
-    }
-}
+SUPPORTED_ACTIONS = supported_actions()
 
 
 def start_action(action_id: str) -> dict:
@@ -22,6 +17,7 @@ def start_action(action_id: str) -> dict:
         "status": "needs_input",
         "action_id": action_id,
         "label": SUPPORTED_ACTIONS[action_id]["label"],
+        "issue_type": SUPPORTED_ACTIONS[action_id]["issue_type"],
         "missing_slots": missing,
         "questions": slot_questions(action_id, missing),
         "privacy_notice": "학번, 실명, 주민번호, 연락처, 포털 ID/PW 등 개인정보는 입력하지 마세요.",
@@ -37,9 +33,11 @@ def continue_action(action_id: str, slots: dict, policy_chunks: list[dict] | Non
         return {
             "status": "needs_input",
             "action_id": action_id,
+            "label": SUPPORTED_ACTIONS[action_id]["label"],
+            "issue_type": SUPPORTED_ACTIONS[action_id]["issue_type"],
             "missing_slots": missing,
             "questions": slot_questions(action_id, missing),
+            "privacy_notice": "학번, 실명, 주민번호, 연락처, 포털 ID/PW 등 개인정보는 입력하지 마세요.",
         }
     draft = draft_action_document(action_id, slots, policy_chunks or [])
     return {"status": "completed", "action_id": action_id, **draft}
-
